@@ -1,26 +1,28 @@
-import { collection, doc, query, where, orderBy, onSnapshot, addDoc, deleteDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, doc, query, where, onSnapshot, addDoc, deleteDoc, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import { Transaction, Category, DEFAULT_CATEGORIES } from '../types';
 
 export const subscribeToTransactions = (userId: string, callback: (data: Transaction[]) => void) => {
   const q = query(
     collection(db, 'transactions'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
+    where('userId', '==', userId)
   );
   return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction)));
+    const txs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+    txs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    callback(txs);
   });
 };
 
 export const subscribeToCategories = (userId: string, callback: (data: Category[]) => void) => {
   const q = query(
     collection(db, 'categories'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'asc')
+    where('userId', '==', userId)
   );
   return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category)));
+    const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+    cats.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    callback(cats);
   });
 };
 
